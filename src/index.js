@@ -5,7 +5,7 @@ var config = {
     physics: {
         default: 'arcade',
         arcade: {
-            gravity: { y: 500 }
+            gravity: { y: 200 }
         }
     },
     scene: {
@@ -41,5 +41,5 @@ function create() {
     logo.setBounce(1, 1);
     logo.setCollideWorldBounds(true);
 
-    emitter.startFollow(logo);
+    //emitter.startFollow(logo);
 }
