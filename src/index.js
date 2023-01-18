@@ -41,5 +41,5 @@ function create() {
     logo.setBounce(1, 1);
     logo.setCollideWorldBounds(true);
 
-    //emitter.startFollow(logo);
+    emitter.startFollow(logo);
 }
