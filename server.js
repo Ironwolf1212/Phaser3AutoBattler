@@ -13,5 +13,5 @@ app.get('*', (req, res) => {
 const PORT = process.env.PORT || 8080;
 
 app.listen(PORT, () => {
-
+    console.log(`Autobattler app listening at http://localhost:${PORT}`);
 });

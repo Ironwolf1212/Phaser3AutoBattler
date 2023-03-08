@@ -29,6 +29,7 @@ var config = {
 
 var game = new Phaser.Game(config);
 
+
 function preload() {
     this.load.audio('hitSound', ['assets/Hit_Thump.mp3'])
     this.load.image('sky', 'assets/sky.png');
@@ -51,6 +52,15 @@ var battleTimer = 0;
 var turn = 'left';
 var returnPlayers = false;
 var notAttacking = false;
+var leftPlayerAttackPool = [
+    ["regularHit", ["2", 2500, 0]],
+    ["jumpAttack", ["2", 2500, 100]],
+    ["chargedAttack", ["2", 2500, 1000]]
+];
+var chosenAttack = -1;
+var attackPhase = 0;
+var timeCheck = 0;
+var inAttackAnimation = false;
 
 
 function create() {
@@ -164,6 +174,20 @@ function update() {
         
         
         
+    }
+    if (inAttackAnimation = true) {
+        if (game.time.now - timeCheck > leftPlayerAttackPool[chosenAttack][attackPhase][2]) {
+            //n seconds have elapsed, so safe to do something
+            if (attackPhase < leftPlayerAttackPool[chosenAttack].length) {
+                attackPhase++
+                startMovement(leftPlayerAttackPool[chosenAttack], attackPhase);
+            }
+            else {
+                inAttackAnimation = false;
+            }
+        } else {
+            //still waiting
+        }
     }/*
     else if (cursors.right.isDown) {
         player.setVelocityX(160);
@@ -218,7 +242,11 @@ function triggerAttack() {
     //Attack
     if (turn == 'left') {
         //Left player attack, set animations and such
-        player1.setVelocityX(250);
+        //choose random index of leftPlayerAttackPool, store it in chosenAttack
+        chosenAttack = getRandomInt(leftPlayerAttackPool.length);
+        attackPhase = 1;
+        startMovement(leftPlayerAttackPool[chosenAttack], attackPhase);
+        inAttackAnimation = true;
         player1.anims.play('right', true)
     }
     else {
@@ -249,4 +277,21 @@ function calculateAttack() {
     player1.setVelocityX(0);
     player2.setVelocityX(0);
     returnPlayers = true;
+}
+
+function getRandomInt(max) {
+    return Math.floor(Math.random() * max);
+}
+
+
+function startMovement(movement, phase) {
+    switch (movement[phase][0]) {
+        case "1":
+            break;
+        case "2":
+            player1.setVelocityX(leftPlayerAttackPool[chosenAttack][phase][1]);
+            break;
+
+    }
+    timeCheck = game.time.now;
 }
