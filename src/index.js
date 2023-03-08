@@ -1,3 +1,4 @@
+import WaitEventsPlugin from 'phaser3-rex-plugins/plugins/waitevents-plugin.js';
 
 var config = {
     type: Phaser.AUTO,
@@ -10,6 +11,15 @@ var config = {
             debug: false
         }
     },
+    plugins: {
+        global: [{
+            key: 'rexWaitEvents',
+            plugin: WaitEventsPlugin,
+            start: true
+        },
+            // ...
+        ]
+    },
     scene: {
         preload: preload,
         create: create,
@@ -20,6 +30,7 @@ var config = {
 var game = new Phaser.Game(config);
 
 function preload() {
+    this.load.audio('hitSound', ['assets/Hit_Thump.mp3'])
     this.load.image('sky', 'assets/sky.png');
     this.load.image('ground', 'assets/platform.png');
     this.load.image('star', 'assets/star.png');
@@ -39,9 +50,11 @@ var player2;
 var battleTimer = 0;
 var turn = 'left';
 var returnPlayers = false;
-var safeNSound = false;
+var notAttacking = false;
+
 
 function create() {
+    
     
     cursors = this.input.keyboard.createCursorKeys();
     this.add.image(400, 300, 'sky');
@@ -70,7 +83,8 @@ function create() {
 
     });
     bombs = this.physics.add.group();
-    */infoText = this.add.text(16, 16, 'Turn: ' + turn + '(' + battleTimer + ')', { fontSize: '32px', fill: '#000' });
+    */
+    infoText = this.add.text(16, 16, 'Turn: ' + turn + '(' + battleTimer + ')', { fontSize: '32px', fill: '#000' });
 
     this.anims.create({
         key: 'left',
@@ -78,7 +92,7 @@ function create() {
         frameRate: 10,
         repeat: -1
     });
-    /*
+    
     this.anims.create({
         key: 'turn',
         frames: [{ key: 'dude', frame: 4 }],
@@ -90,13 +104,16 @@ function create() {
         frames: this.anims.generateFrameNumbers('dude', { start: 5, end: 8 }),
         frameRate: 10,
         repeat: -1
-    });*/
+    });
+
     this.physics.add.collider(player1, platforms);
     this.physics.add.collider(player2, platforms);
     /*this.physics.add.collider(stars, platforms);
     this.physics.add.collider(bombs, platforms);
     this.physics.add.collider(player, bombs, hitBomb, null, this);*/
     this.physics.add.overlap(player1, player2, calculateAttack, null, this);
+    player1.anims.play('turn', true)
+    player2.anims.play('turn', true)
 }
 
 function update() {
@@ -109,15 +126,18 @@ function update() {
     if (returnPlayers == true) {
         if (turn == 'left') {
             //Left player return
+            player1.anims.play('left', true)
             player1.setVelocityX(-250);
             if (player1.x < 100) {
                 player1.setVelocityX(0);
                 player1.setPosition(100, 513);
+                
                 returnPlayers = false;
-                safeNSound = true;
+                notAttacking = true;
             }
             battleTimer = 0;
-            if (safeNSound) {
+            if (notAttacking) {
+                player1.anims.play('turn', true)
                 turn = 'right';
             }
             
@@ -125,15 +145,18 @@ function update() {
         }
         else {
             //Right player return
+            player2.anims.play('right', true)
             player2.setVelocityX(250);
             if (player2.x > 670) {
                 player2.setVelocityX(0);
                 player2.setPosition(670, 513);
+                
                 returnPlayers = false;
-                safeNSound = true;
+                notAttacking = true;
             }
             battleTimer = 0;
-            if (safeNSound) {
+            if (notAttacking) {
+                player2.anims.play('turn', true)
                 turn = 'left';
             }
         }
@@ -194,27 +217,34 @@ function hitBomb(player, bomb) {
 function triggerAttack() {
     //Attack
     if (turn == 'left') {
-        //Left player attack
+        //Left player attack, set animations and such
         player1.setVelocityX(250);
-        //accelerateToObject(player1, player2)
-        //accelerateTo(player1, 200, 100)
+        player1.anims.play('right', true)
     }
     else {
-        //Right player attack
+        //Right player attack, set animations and such
         player2.setVelocityX(-250);
-        //accelerateToObject(player2, player1)
-        //accelerateTo(player2, 450, 100)
+        player2.anims.play('left', true)
     }
 }
 
 function calculateAttack() {
-    safeNSound = false;
+    var hitSound = this.sound.add('hitSound');
+    var clearTints = this.plugins.get('rexWaitEvents').add(function () {
+        player1.clearTint();
+        player2.clearTint();
+    })
+    notAttacking = false;
+    hitSound.play();
     if (turn == 'left') {
-        //Left player attack
-        
+        //Left player attack, calculate damage
+        player2.setTint(0xff0000);
+        this.time.delayedCall(60, clearTints.waitCallback());
     }
     else {
-        //Right player attack
+        //Right player attack, calculate damage
+        player1.setTint(0xff0000);
+        this.time.delayedCall(60, clearTints.waitCallback());
     }
     player1.setVelocityX(0);
     player2.setVelocityX(0);
